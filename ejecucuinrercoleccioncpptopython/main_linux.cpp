@@ -102,7 +102,6 @@ int main(){
 
     char cTextR[300]={0}; 
     std::string host;
-    // std::string comando = "python ../../proyectos/pruebas_dos_rmmigracionregistromovil/llaves.py conx1";
     std::string comando = "python llaves.py";
     
     if(getCredentials(comando, cTextR, sizeof(cTextR) ))
