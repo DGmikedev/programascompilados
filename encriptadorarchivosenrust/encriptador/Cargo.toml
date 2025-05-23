@@ -4,4 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-aes-gcm = "0.10.3"
+aes-gcm = "0.10.3"  # 128/256 bits de soporte
+aes = "0.8"         # bloque para cipher
+rand = "0.8"        # para los IVs
