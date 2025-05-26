@@ -14,7 +14,7 @@
     [dependencies]
     aes-gcm = "0.10.3"  # 128/256 bits de soporte
     aes = "0.8"         # bloque para cipher
-    rand = "0.8"        # no usado
+
 ```
 
 
