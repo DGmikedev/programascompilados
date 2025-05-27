@@ -1,0 +1,7 @@
+[package]
+name = "generadordocumento"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+umya-spreadsheet = "2.3.0"   # creador de excel
