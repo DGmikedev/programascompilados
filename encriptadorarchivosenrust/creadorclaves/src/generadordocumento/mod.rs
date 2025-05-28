@@ -40,7 +40,7 @@ pub fn documento(){
     // Confifura color de fondo
     style.set_background_color(Color::COLOR_RED);
 
-    sheet.set_name("aviso");
+    sheet.set_name("LOG_INFORME");
     sheet.add_merge_cells("A1:D2");
     sheet.get_cell_mut("A1").set_value("LOG CREDENCIALES NO MODIFICAR ")
         .set_style(style.clone());
@@ -116,9 +116,15 @@ pub fn documento(){
     sheet.get_cell_mut("H12").set_value("servicios");
     sheet.get_cell_mut("H13").set_value("area_solicitante");
 
-    sheet.add_merge_cells("E14:H16");
+
+    sheet.add_merge_cells("E14:E16");
+    sheet.get_cell_mut("E14").set_value("desc_servicio ");
+
+    sheet.add_merge_cells("F14:H16");
+    sheet.get_cell_mut("F14").set_value("llaves generadas para el aplicativo #125 con rfc de servicio: 12584");
+   
 
     // writer
-    let path = std::path::Path::new("logcredenciales.xlsx");
+    let path = std::path::Path::new("log/logcredenciales.xlsx");
     let _ = writer::xlsx::write(&book, path);
 }
