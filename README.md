@@ -6,7 +6,7 @@
 
 ## RUST
 
-![COMPILADO PARA ENCRIPTAR Y DESENCRIPTAR ARCHIVOS CON AES-256](encriptadorarchivosenrust/encriptador)
+![COMPILADO PARA ENCRIPTAR Y DESENCRIPTAR ARCHIVOS CON AES-256](encriptadorarchivosenrust/creadorclaves/README.md)
 
 ```bash
 #Cargo.toml
