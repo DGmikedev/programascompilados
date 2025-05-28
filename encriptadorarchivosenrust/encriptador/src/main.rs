@@ -45,7 +45,9 @@ pub fn encriptador_de_archivos(input_path: &str, output_path: &str, key_bytes: &
     encrypted_data.extend(ciphertext);
 
     // escribimos el data encriptado en el path indicado
-    let _ = fs::write(output_path, encrypted_data);
+    let _ = fs::write(&output_path, encrypted_data);
+
+    let outenc = format!("encriptació de archivo correcto [{}]",output_path.to_string())
 
     Ok(())
 

@@ -14,6 +14,8 @@
     [dependencies]
     aes-gcm = "0.10.3"  # 128/256 bits de soporte
     aes = "0.8"         # bloque para cipher
+    rand = "0.8"        # para los IVs
+    umya-spreadsheet = "2.3.0"   # creador de excel
 
 ```
 

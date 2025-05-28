@@ -1,6 +1,15 @@
 use umya_spreadsheet::*;
 
-pub fn documento(){
+
+/**
+ * Función que genera un archivo xls con 
+ * los datos requeridos para su registro
+ * en el sistema de guardado de servicios 
+ * (SISG)
+ * 
+ * retrun (bool, String)
+ */
+pub fn documento()->(bool, String){
      let mut book = new_file();
 
     let sheet = book.get_sheet_by_name_mut("Sheet1").unwrap();
@@ -19,10 +28,10 @@ pub fn documento(){
     style2.set_alignment(alignment.clone());
     
     // Configura fuente
-    let mut font = style.get_font_mut();
+    let font = style.get_font_mut();
     font.set_bold(true);
 
-    let mut font2 = style2.get_font_mut();
+    let font2 = style2.get_font_mut();
     font2.set_bold(true);
 
 
@@ -123,8 +132,23 @@ pub fn documento(){
     sheet.add_merge_cells("F14:H16");
     sheet.get_cell_mut("F14").set_value("llaves generadas para el aplicativo #125 con rfc de servicio: 12584");
    
+   
+
 
     // writer
     let path = std::path::Path::new("log/logcredenciales.xlsx");
-    let _ = writer::xlsx::write(&book, path);
+    
+    let escritor = writer::xlsx::write(&book, &path);
+
+    // Se arma la tupla de salida
+    let _salidadoc = match escritor{
+        Ok(_ok)=>{ 
+            let s = format!("Creación de log exitosa: [{}]",&path.display());
+            return (true, s) 
+        },
+        Err(e)=>{ 
+            let x = format!("falló creación de log [{}]",e);
+            return (true, x)
+        }
+    };
 }
