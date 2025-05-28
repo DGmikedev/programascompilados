@@ -1,4 +1,3 @@
-
 use aes_gcm::{ Aes256Gcm, Nonce, Key };
 use aes_gcm::aead::{Aead, KeyInit };  
 use std::fs::File;
@@ -97,13 +96,8 @@ pub fn desencriptador_de_archivos(input_path: &str, output_path: &str, key_bytes
 
     Ok(())
 }
-/*
-fn main() {
-    // 32 caracteres para aes-256 // [0u8; 32]; // clave segura de 256 bits  
-    let key = "*_(U}zJy[1lKxBBr-iGo`H>P<^y;5+fk";
-    // 12 caracteres para iv  
-    let iv = "cFvEr4v8xzZd";
-    encriptador_de_archivos("mensaje.txt", "mensaje.enc", &key, &iv).expect("Falló el cifrado");
-    desencriptador_de_archivos("mensaje.enc", "mensaje_decrypted.txt", &key, &iv).expect("Falló el descifrado");
+
+
+pub fn test_escriptar(){
+    println!("test ok encriptador");
 }
-*/
