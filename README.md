@@ -19,7 +19,7 @@
 
 ```
 
-![COMPILADO PARA LISTAR CARACTERISTICAS DE SERVIDOR](scanerdeservidor\README.md)
+![COMPILADO PARA LISTAR CARACTERISTICAS DE SERVIDOR](scanerdeservidor/README.md)
 
 ```bash
 #Cargo.toml
