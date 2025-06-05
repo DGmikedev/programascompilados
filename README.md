@@ -19,4 +19,14 @@
 
 ```
 
+![COMPILADO PARA LISTAR CARACTERISTICAS DE SERVIDOR](scanerdeservidor\README.md)
+
+```bash
+#Cargo.toml
+
+    [dependencies]
+    chrono = "0.4.41"   # generar fechas 
+
+```
+
 
