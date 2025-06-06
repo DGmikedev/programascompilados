@@ -77,6 +77,22 @@ fn obtener_datos_mysql(opc: usize)->Vec<u8>{
     return ejecutar_comando(&comando, &comandos_mysql[opc]);
 }
 
+/* fn obtener_fabricante_linux(){
+
+    // array de argumetos
+    let args: [String; 2] = [
+        "/C".to_string(), 
+        "pip list".to_string()
+    ];
+
+    // comando en windows
+    let comando = "powershell";
+
+    return ejecutar_comando(comando, &args);
+
+} */
+// sudo dmidecode -s system-manufacturer
+
 /**
  * Fucnion que retorna strings para formar el texto
  * del informe
@@ -183,6 +199,17 @@ fn main() {
 
     }else{  
          texto.push_str( &format!("SISTEMA OPERATIVO: [{}]\n" ,mensages(4)) );
+
+        let output = Command::new("sudo")
+        .arg("dmidecode")
+        .arg("-s")
+        .arg("system-manufacturer")
+        .output()
+        .expect("failed to execute process");
+
+    println!("stdout:\n{}", String::from_utf8_lossy(&output.stdout));
+    //eprintln!("stderr:\n{}", String::from_utf8_lossy(&output.stderr));
+        return ();
     }
 
 
