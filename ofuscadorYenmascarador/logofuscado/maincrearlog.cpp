@@ -9,6 +9,17 @@
 // del archivo ofuscador.cpp
 void ofuscador(char*, std::string);
 
+
+/**
+ *  Crea y scribe una línea de texto
+ *  en un archivo .txt que funciona como log
+ * 
+ *  char* nombre  es el nombre del archivo a crear o abrir 
+ *  char* mensaje es el texto que se adjuntará el archivo de texto
+ * 
+ *  return boolean  si cumple con las funciones la salida será true
+ *                  de caso contrarío sera false
+ */
 bool crearlog(char* nombre, char* mensaje){
 
 
