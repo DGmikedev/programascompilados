@@ -6,6 +6,12 @@ que no se desea que sean vistos por personas no autorizadas para ello.
 
 ![AQUÍ LA CARPETA DEL PROYECTO](logofuscado)
 
+## COMPILAR EN LA CARPETA logofuscado
+
+```bash
+g++ maincrearlog.cpp ofuscador.cpp -o rmcrearlogofuscado.exe
+```
+
 ## CONTIENE DOS FUCNONES
 
 ### ofuscador
