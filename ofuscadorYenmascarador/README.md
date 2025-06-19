@@ -4,7 +4,7 @@ Este programa es un prototipo de funciones que se usarón para crear<br>
 uin log ofuscado el cual ofusca o enmascara los datos <br>
 que no se desea que sean vistos por personas no autorizadas para ello.
 
-![AQUÍ LA CARPETA DEL PROYECTO](ofuscadorYenmascarador/logofuscado)
+![AQUÍ LA CARPETA DEL PROYECTO](logofuscado)
 
 ## CONTIENE DOS FUCNONES
 
