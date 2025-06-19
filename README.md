@@ -28,7 +28,7 @@
     chrono = "0.4.41"   # generar fechas 
 
 ```
-![COMPILADO EN C++ PARA CREAR UN LOG CON PARAMETRO OFUSCADO Y ENMASCARADO](ofuscadorYenmascarador/logofuscado)
+![COMPILADO EN C++ PARA CREAR UN LOG CON PARAMETRO OFUSCADO Y ENMASCARADO](ofuscadorYenmascarador/README.md)
 
 
 
