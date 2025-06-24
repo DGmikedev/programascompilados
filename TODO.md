@@ -2,11 +2,15 @@
 
 ```rust
 
+use actix_files::NamedFile;
 use actix_web::{ 
-    get, http::header::{self, ContentDisposition}, post, web::{self, Json}, App, Error, HttpResponse, HttpServer, Responder
+    get, http::header::{self, ContentDisposition}, post, web::{self, Json}, App, Error, HttpRequest, HttpResponse, HttpServer, Responder
 };
 
-use actix_multipart::Multipart;
+use actix_multipart::{form::MultipartFormConfig, Multipart};                                  // para subir un archivo
+use actix_multipart::form::{MultipartForm, tempfile::TempFile, text::Text};  // para subir más de un archivo
+
+use std::path::PathBuf;
 
 use futures_util::TryStreamExt;
 use std::io::Write;
@@ -151,19 +155,19 @@ struct AdicionARespuestaConJson{
     cubiculo: u8,
     computadoraId: u8
 }
-
+///  
 #[get("/rsponsejson")]
 async fn responsejson()->HttpResponse{
 
     let facturacion:AdicionARespuestaConJson =  AdicionARespuestaConJson{
         oficina: "facturacion".to_string(),
         cubiculo: 15,
-        computadoraId: 125
+        computadoraId: 125    
     };
     let exterior:AdicionARespuestaConJson =  AdicionARespuestaConJson{
         oficina: "ventas foraneas".to_string(),
         cubiculo: 5,
-        computadoraId: 20
+        computadoraId: 20  
     };
     let jsn: JsonResponse = JsonResponse{
         id:1,
@@ -193,9 +197,9 @@ async fn responsejson()->impl Responder{
     // HttpResponse::Ok().body()
 }  */
 
-/////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 
-// COMPROBACION PARA SUBIR ARCHIVOS  /////////////////////////////////////////////////////
+// COMPROBACION PARA SUBIR UN SOLO ARCHIVO  /////////////////////////////////////////////////////
 
 // .- CREATE PARA MULTIPART EN ACTIX
 // .- cargo add actix-multipart
@@ -232,11 +236,59 @@ async fn subirarchivo(mut payload: Multipart)-> Result<HttpResponse, Error>{
     
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
+
+// COMPROBACION PARA SUBIT MULTIPLES ARCHIVOS  //////////////////////////////////////////
+//  IMPORTANTE 50 MB para todo el PAYLOAD  !!!!!!!!!!!!  ///////////////////////////////
+
+#[derive(Debug, MultipartForm)]
+pub struct FormularioArchivos{
+    pub nombre: Text<String>,
+    pub apellido: Text<String>,
+    pub archivo: TempFile,
+    pub anexos: Vec<TempFile>
+}
+
+#[post("/subirarchivos")]
+async fn formulario_multipart(MultipartForm(form): MultipartForm<FormularioArchivos>) -> Result<HttpResponse, Error>{
+    println!("Nombre: {}", form.nombre.as_str());
+    println!("Apellido: {}", form.apellido.as_str());
+    let file_name = form.archivo.file_name.unwrap();
+    let file_path = format!("./archivos/{file_name}");
+    form.archivo.file.persist(file_path).unwrap();
+    Ok(HttpResponse::Ok().body("Formulario procesado correctamente"))
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+// PRUEBA PARA COMPROBAR EL DESPACHADO DE ARCHIVOS ESTATICOS  /////////////////////////////////
+
+#[get("/estaticos/{nombre_archivo}")]
+async fn archivo_estaticio(req: HttpRequest)->Result<NamedFile, Error>{
+
+    let pbuf: PathBuf = req.match_info().query("nombre_archivo").parse().unwrap();
+
+    let mut ruta = pbuf.into_os_string().into_string().unwrap();
+
+    println!("Buscando archivo en: {}", ruta.clone());
+
+    ruta = format!("./estaticos/{ruta}");
+
+    let archivo_disponible: NamedFile = NamedFile::open(&ruta)?;
+
+    // Ok(archivo_disponible.use_last_modified(true)) // solo para mostrar/disponer en el navegador
+
+    // para que el archivo del cual se quiere disponer se descargue desde el navegador
+    Ok( archivo_disponible
+        .set_content_disposition( ContentDisposition::attachment( ruta.clone() ) )
+        .use_last_modified(true) 
+    )
+
+
+}
 
 
 
-
-/////////////////////////////////////////////////////////////////////////////////////////
 
 // funcion main
 #[actix_web::main]
@@ -252,10 +304,23 @@ async fn main() -> std::io::Result<()> {
     let ip: &str = "127.0.0.1";  //   (&str, u16)
     let puerto: u16 = 8080;      //    ip , port
 
+    
 
 
     HttpServer::new(|| {
+        // COMPROBACIÓN DE PARA AUMENTAR EL TAMAÑO DE LOS PAYLOADS EN LAS SUBIDAS DE ARCHIVOS  ///////
+        
+        // SE ESTABLECE EL LIMTE DE MEMORIA TOTAL Y DE PAYLOAD IGUAL
+        // 1024 = 1 Kilobyte
+        // 1024 * 1024 = 1 Mega Byte
+        // 1024 * 1024 * 100 = 100 Mega bytes
+        let memoria_para_payload: usize = 1024 * 1024 * 100;
+        let multipart_form_config: MultipartFormConfig = MultipartFormConfig::default()
+            .total_limit(memoria_para_payload)
+            .memory_limit(memoria_para_payload);
+        //////////////////////////////////////////////////////////////////////////////////////////////
         App::new()
+        .app_data(multipart_form_config)
             // .service(status)
             // .service(echo)
             .route("/", web::get().to(estatus)) // alternativa a ruta
@@ -267,9 +332,13 @@ async fn main() -> std::io::Result<()> {
             .service(person)
             .service(responsejson)
             .service(subirarchivo)
+            .service(formulario_multipart)
+            .service(archivo_estaticio)
     })
     .bind((ip, puerto))?
     .run()
     .await
 }
+
+
 ```
