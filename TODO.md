@@ -1,21 +1,43 @@
 # APIS EN RUST Y ACTIX-WEB
 
 ```rust
-
 use actix_files::NamedFile;
 use actix_web::{ 
-    get, http::header::{self, ContentDisposition}, post, web::{self, Json}, App, Error, HttpRequest, HttpResponse, HttpServer, Responder
+   cookie::time::Duration, dev::ServiceRequest, get, http::header::{self, ContentDisposition}, post, web::{self, Json}, App, Error, HttpRequest, HttpResponse, HttpServer, Responder
 };
+
+
+use actix_web::error;
 
 use actix_multipart::{form::MultipartFormConfig, Multipart};                                  // para subir un archivo
 use actix_multipart::form::{MultipartForm, tempfile::TempFile, text::Text};  // para subir más de un archivo
 
 use std::path::PathBuf;
-
-use futures_util::TryStreamExt;
+use futures_util::{future::ok, TryStreamExt};
 use std::io::Write;
-
 use serde::{Deserialize, Serialize};
+
+use actix_web_httpauth::{                     // para autenticación básica
+    extractors::{
+        basic::{self, BasicAuth},
+        AuthenticationError
+    },
+    headers::www_authenticate
+};
+use actix_web_httpauth::middleware::HttpAuthentication;
+
+
+use actix_web_httpauth::extractors::bearer::BearerAuth;  // token refrehs  ///
+
+
+// para jwt
+use jsonwebtoken::{
+    decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation
+};
+
+use chrono::{Utc, Duration as duration_chrono};
+
+
 
 
 // COMPROBACIÓN DE PETICIONES  /////////////////////////////////////////////
@@ -288,11 +310,209 @@ async fn archivo_estaticio(req: HttpRequest)->Result<NamedFile, Error>{
 }
 
 
+// COMPROBACION DE AUTENTICACIÓN BÁSICA ///////////////////////////////////////////////////////
+
+// 1.-  SE IMPORTAN LOS PAQUETES actix-web actix-web-httpauth
+// 2.-  Se crean los scopes para aglutinar los recursos entre rutas
+//      si no se hiciera así, el middleware revisaría todas las rutas y no dejaria pasar las 
+//      peticiones en rutas publicas
+
+// Extractor reciven las peticiones http y extraen la información
+
+
+// middleware que valida las credenciales
+
+async fn validador(
+    req: ServiceRequest, 
+    credenciales: BasicAuth)
+    ->Result<ServiceRequest, (Error, ServiceRequest)>{
+
+    if credenciales.user_id() == "admin" && credenciales.password().unwrap() == "admin" {
+        Ok(req)
+    }else{
+        Err(
+            ( AuthenticationError::new(www_authenticate::basic::Basic::default()).into(),
+            req
+        ))
+    }
+
+}
+
+
+#[get("/publico")]
+async fn publico()->HttpResponse{
+    HttpResponse::Ok().body("Acceso a publico")
+}
+
+
+#[get("/privado")]
+async fn privado(auth: BasicAuth)->Result<HttpResponse, Error>{
+    if auth.user_id() == "user" && auth.password().unwrap() == "123" {
+         Ok(HttpResponse::Ok().body("Acceso a privado"))
+    }else{
+        Err(AuthenticationError::new(www_authenticate::basic::Basic::default()).into())
+    }
+   
+}
+
+
+
+#[get("/confidencial")]
+async fn confidencial()->HttpResponse{
+    HttpResponse::Ok().body("Acceso a información confidencial")
+}
+
+
+#[get("/super_confidencial")]
+async fn super_confidencial()->HttpResponse{
+    HttpResponse::Ok().body("Acceso a información super_confidencial")
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+// COMPROBACION DEL FUNCIONAMIENTO DE JWT (JSON WEB TOKEN) ///////////////////////////////////
+
+// 1.-  EL TOKEN ESTA FORMADO POR TRES PARTES  ENCABEZADO, PAYLOAD Y FIRMA
+// ejemplo de jwt: 
+// ENCABEZADO                           PAYLOAD                                                                                     FIRMA
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30
+// INFO DESCRIPCIÓN DE JWT :: https://datatracker.ietf.org/doc/html/rfc7519
+// 2.-  SE IMPORTA EL CRATE   cargo add jsonwebtoken, cargo add chrono
+
+
+// esta constante va en una variable de entorno y en un .env
+const LLAVE: &[u8] = b"12345";
+
+// estructura que conformará el json web token
+#[derive(Deserialize, Serialize, Debug)]
+struct Claims{
+    iss: String,
+    sub: String,
+    exp: usize,
+    iat: usize,
+    tipo: String,  /// refresh token
+    user_id: usize,
+}
+
+
+/// COPROBACIÓN DEL REFRESCO DEL TOKEN ////////////////////////////////////////////////////////////
+#[derive(Serialize, Deserialize)]
+struct LoginForm{
+    usuario: String,
+    password: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Loginresult{
+    token: String,
+    refresh: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct refreshResult{
+    token:String
+}
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+fn generar_token(iss: String, sub:String, minutos: i64, user_id: usize, tipo: String)-> String{
+    let header =  Header::new(Algorithm::HS512);
+    let encoding_key = EncodingKey::from_secret(LLAVE);
+
+    let exp: usize = (Utc::now() + duration_chrono::minutes(minutos)).timestamp() as usize;
+    // let exp: usize = 0usize; // SE COMPRUEBA QUE LE TIMEPO DE EXPIRACIÓN SE GENERA SI SE RETARDAN LAS RESPUESTAS [Error(ExpiredSignature)]
+    let iat: usize = Utc::now().timestamp() as usize; 
+
+    let my_claims:Claims = Claims {
+        iss,
+        sub,
+        exp,
+        iat,
+        tipo, /// refresh token
+        user_id
+    };
+
+    encode(&header, &my_claims, &encoding_key).unwrap()
+}
+
+fn validar_token(token: String)-> Result<Claims, jsonwebtoken::errors::Error>{
+    let validacion = Validation::new(Algorithm::HS512);
+    let decoding_key = DecodingKey::from_secret(LLAVE.as_ref());
+    // let decoding_key = DecodingKey::from_secret(b"dfdf".as_ref());    // SE COMPRUEBA QUE SE DEBE DE TENER LA MISMA LLAVE, MUESTRA:  [Error(InvalidSignature)]
+
+    let resultado = decode::<Claims>(&token, &decoding_key, &validacion);
+
+    match resultado {
+        Ok(c) => {
+            println!("Token Valido");
+            Ok(c.claims)
+        },
+        Err(e) => {
+            println!("Token invalido");
+            Err(e)
+        }
+    }
+}
+
+// función para validar token refresh ///////////////////////////////////////////////////////
+
+
+async fn validador_token_refresh(
+    req: ServiceRequest, 
+    credenciales: Option<BearerAuth>)
+    ->Result<ServiceRequest, (Error, ServiceRequest)>{
+
+    let Some(credenciales) = credenciales else {
+        return Err((error::ErrorBadRequest("No se especificó el token"), req));
+    };
+
+    let token = credenciales.token();
+
+    let resultado = validar_token(token.to_owned());
+
+    match resultado {
+        Ok(claims) =>{ 
+            println!("Los claims son: {:?}", claims);
+            if claims.tipo != "refresh" {
+              return ok(req);
+            }else{
+                return Err((error::ErrorForbiden("No tiene acceso"), req));
+            }
+        
+    }
+        Err(e) => println!("Error el token no es valido: {:?}", e)
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
 
 
 // funcion main
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+
+    //  COMPROBACIÓN DE LA GENERACIÓN DE JWT //////////////////////////////////////////////////
+
+    let iss: String = "rusty mike".to_string();
+    let sub: String = "test_jwt" .to_string();
+    let minutos: i64 = 5 as i64;
+    let user_id: usize = 1; 
+    let tipo:String = "".to_string();
+
+    let token:String = generar_token(iss, sub, minutos, user_id, tipo);
+
+    println!("Token Generado: {}", &token);
+
+    match validar_token(token){
+        Ok(c) => {
+            println!("Token: {:?}", c);
+        },
+        Err(e)=>{
+            println!("Error [{:?}]", e);
+        }
+    }
 
     
     /* (&str, u16)
@@ -303,9 +523,6 @@ async fn main() -> std::io::Result<()> {
     
     let ip: &str = "127.0.0.1";  //   (&str, u16)
     let puerto: u16 = 8080;      //    ip , port
-
-    
-
 
     HttpServer::new(|| {
         // COMPROBACIÓN DE PARA AUMENTAR EL TAMAÑO DE LOS PAYLOADS EN LAS SUBIDAS DE ARCHIVOS  ///////
@@ -319,11 +536,19 @@ async fn main() -> std::io::Result<()> {
             .total_limit(memoria_para_payload)
             .memory_limit(memoria_para_payload);
         //////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// CREACIÓN DE LA VARIABLE QUE DA DE ALTA EL MIDDLEWARE   ///////////////////////////////////
+
+        let auth_in  =  HttpAuthentication::basic(validador);
+        ////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        let auth_basic = basic::Config::default().realm("privado");
+        
         App::new()
-        .app_data(multipart_form_config)
-            // .service(status)
-            // .service(echo)
-            .route("/", web::get().to(estatus)) // alternativa a ruta
+        // .wrap(auth_in)                       // se da de alta el validador de credenciales prueba que se puede aplicar autorización a todas las rutas
+        .app_data(multipart_form_config)        // configuración del manejador de archivos multiparte
+        .app_data(auth_basic)                   // configuración de la autenticación
+        .route("/", web::get().to(estatus))     // alternativa a ruta
             .service(usuario)
             .service(formulario)
             .service(usuariof)
@@ -334,6 +559,16 @@ async fn main() -> std::io::Result<()> {
             .service(subirarchivo)
             .service(formulario_multipart)
             .service(archivo_estaticio)
+            // bloque que comprueba las credenciales ///////////////////////
+            .service(publico)                        //  esta ruta queda sin autorización 
+            .service(                               
+                web::scope("/admin")                 // este espacio o ambito (scope) tiene dos rutas  
+                .wrap(auth_in)                       // se incluye el middleware creado anteriormente y engloba las rutas que contiene ele servicio 
+                .service(super_confidencial)         // esta ruta esta revisada de autorización con admin admin 
+                .service(confidencial)               // esta ruta esta revisada de autorización con admin admin  
+            )
+            .service(privado)                         // esta ruta esta revisad ade autorización user - 123 por que esta fuera del ambito (scope) /admin
+            //////////////////////////////////////////////////////////////////
     })
     .bind((ip, puerto))?
     .run()
