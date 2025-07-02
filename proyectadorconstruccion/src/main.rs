@@ -19,15 +19,15 @@ impl Varilla{
     }
 
     pub fn varilla_grid(&self, ancho: f32, largo:f32, separacion: f32){
-        let cnt_ancho = ancho / separacion;
-        let cnt_largo = largo / separacion;
+        let cnt_ancho = ( ancho / separacion ).floor() + 2.0;
+        let cnt_largo = ( largo / separacion).floor() + 2.0;
         println!("metraje de varilla: ancho = {}\nlargo = {}",cnt_ancho, cnt_largo );
     }
 
 }
 
 fn main() {
+
     let varilla = Varilla::new(1, "vrll_loza1".to_string(), "sanchez".to_string(), 120.0);
-    
-    varilla.varilla_grid(6.0, 9.0, 1.4);
+    varilla.varilla_grid(5.0, 6.0, 0.14);
 }
