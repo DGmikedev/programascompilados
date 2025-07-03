@@ -1,33 +1,40 @@
-
-
-pub struct Varilla{
-    id:     usize,
-    nombre: String,
-    marca:  String,
-    costo:  f32,
+pub struct Escalera{
+    altura: f32,
+    longitud:  f32,
+    huella: f32,
+    chuella:f32
 }
 
-impl Varilla{
-    pub fn new(_id:usize, _nombre:String, _marca:String, _costo:f32)->Varilla{
-        let var = Varilla {   
-                id : _id,
-                nombre : _nombre,
-                marca : _marca,
-                costo : _costo,
+impl Escalera{
+    pub fn new(_altura: f32 ,_longitud: f32 ,_huella: f32 ,_chuella:f32)->Escalera{
+        let esc: Escalera = Escalera {   
+                altura: _altura,
+                longitud: _longitud,
+                huella: _huella,
+                chuella: _chuella,
         };
-        var
+        esc
     }
 
-    pub fn varilla_grid(&self, ancho: f32, largo:f32, separacion: f32){
-        let cnt_ancho = ( ancho / separacion ).floor() + 2.0;
-        let cnt_largo = ( largo / separacion).floor() + 2.0;
-        println!("metraje de varilla: ancho = {}\nlargo = {}",cnt_ancho, cnt_largo );
-    }
+    pub fn calula_esc(&self)->(f32, f32, f32, f32, f32, f32){
+        let contra_huella: f32 = (self.altura / self.chuella).round();
+        let huella_esc: f32 = contra_huella - 1.0;
+        let huellas_x_longitud: f32 = &huella_esc * self.huella;
+        let chuellas_x_altura: f32 =  &contra_huella * self.chuella;
 
+        (self.altura, self.longitud, huella_esc, contra_huella, huellas_x_longitud, chuellas_x_altura)
+    }
 }
 
 fn main() {
 
-    let varilla = Varilla::new(1, "vrll_loza1".to_string(), "sanchez".to_string(), 120.0);
-    varilla.varilla_grid(5.0, 6.0, 0.14);
+    let escalera: (f32, f32, f32, f32, f32, f32) = 
+        Escalera::new(
+            1.275,
+            1.98,
+            0.28,
+            0.17)
+    .calula_esc();
+
+    print!("\nAltura: {}\nLongitud: {}\n#Huellas: {}\n#Contra huellas: {}\nHuellas x Longitud: {}\nCHuellas x altura: {}", escalera.0,escalera.1,escalera.2,escalera.3, escalera.4, escalera.5);
 }
