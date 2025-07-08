@@ -146,5 +146,4 @@ fn main() {
 
     print!("\nAltura: {}\nLongitud: {}\n#Huellas: {}\n#Contra huellas: {}\nHuellas x Longitud: {}\nCHuellas x altura: {}", escalera.0,escalera.1,escalera.2,escalera.3, escalera.4, escalera.5);
 }
-
 */

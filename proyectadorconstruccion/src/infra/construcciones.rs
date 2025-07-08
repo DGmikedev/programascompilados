@@ -11,7 +11,7 @@ pub struct Losa{
 }
 
 /*
- Tabla de conversión: m³, kg y L
+Tabla de conversión: m³, kg y L
 Material	        Densidad (kg/m³)	Peso por 1 m³ (kg)	Peso por 1 litro (kg/L)
 Agua	            1,000	            1,000 kg	        1.00 kg/L
 Arena seca	        1,500 – 1,600	    1,500 – 1,600 kg	1.50 – 1.60 kg/L
